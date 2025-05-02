@@ -140,16 +140,16 @@ fetch('links.json')
   .then(response => response.json())
   .then(data => {
     data.forEach(link => {
-      const categoria = link.category.toLowerCase(); // pega a categoria
-      const lista = document.querySelector(`#${categoria} ul`);
-      if (lista) {
-        const item = document.createElement('li');
-        const a = document.createElement('a');
-        a.href = link.url;
-        a.textContent = link.title;
-        a.target = '_blank';
-        item.appendChild(a);
-        lista.appendChild(item);
+      const { title, url, category } = link;
+
+      // Evita duplicatas no localStorage
+      const exists = savedLinks.some(l =>
+        l.title === title && l.url === url && l.category === category
+      );
+
+      if (!exists) {
+        saveLink(title, url, category);
+        addLinkToPage(title, url, category); // também adiciona visualmente
       }
     });
   })
