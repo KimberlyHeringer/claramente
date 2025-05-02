@@ -132,6 +132,18 @@ loginForm.addEventListener("submit", (e) => {
     alert("Usuário ou senha incorretos!");
   }
 });
+ // 📤 Exportar links como JSON
+document.getElementById("export-links").addEventListener("click", () => {
+  const blob = new Blob([JSON.stringify(savedLinks, null, 2)], { type: "application/json" });
+  const url = URL.createObjectURL(blob);
+
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = "links-exportados.json";
+  a.click();
+
+  URL.revokeObjectURL(url);
+});
 
 // ▶️ Executa ao carregar
 loadLinks();
