@@ -135,3 +135,17 @@ loginForm.addEventListener("submit", (e) => {
 
 // ▶️ Executa ao carregar
 loadLinks();
+
+fetch('links.json')
+  .then(response => response.json())
+  .then(links => {
+    const lista = document.getElementById('lista-links');
+    links.forEach(link => {
+      const li = document.createElement('li');
+      li.innerHTML = `<a href="${link.url}" target="_blank">${link.nome}</a>`;
+      lista.appendChild(li);
+    });
+  })
+  .catch(error => {
+    console.error('Erro ao carregar os links:', error);
+  });
