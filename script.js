@@ -138,14 +138,19 @@ loadLinks();
 
 fetch('links.json')
   .then(response => response.json())
-  .then(links => {
-    const lista = document.getElementById('lista-links');
-    links.forEach(link => {
-      const li = document.createElement('li');
-      li.innerHTML = `<a href="${link.url}" target="_blank">${link.nome}</a>`;
-      lista.appendChild(li);
+  .then(data => {
+    data.forEach(link => {
+      const categoria = link.category.toLowerCase(); // pega a categoria
+      const lista = document.querySelector(`#${categoria} ul`);
+      if (lista) {
+        const item = document.createElement('li');
+        const a = document.createElement('a');
+        a.href = link.url;
+        a.textContent = link.title;
+        a.target = '_blank';
+        item.appendChild(a);
+        lista.appendChild(item);
+      }
     });
   })
-  .catch(error => {
-    console.error('Erro ao carregar os links:', error);
-  });
+  .catch(error => console.error('Erro ao carregar links:', error));
