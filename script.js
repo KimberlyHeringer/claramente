@@ -145,6 +145,40 @@ document.getElementById("export-links").addEventListener("click", () => {
   URL.revokeObjectURL(url);
 });
 
+// 📥 Importar links de um arquivo JSON
+document.getElementById("import-links").addEventListener("click", () => {
+  document.getElementById("import-file").click(); // abre seletor de arquivo
+});
+
+document.getElementById("import-file").addEventListener("change", (event) => {
+  const file = event.target.files[0];
+  if (!file) return;
+
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    try {
+      const importedLinks = JSON.parse(e.target.result);
+      importedLinks.forEach(link => {
+        const { title, url, category } = link;
+
+        // Evita duplicatas
+        const exists = savedLinks.some(l =>
+          l.title === title && l.url === url && l.category === category
+        );
+
+        if (!exists) {
+          saveLink(title, url, category);
+          addLinkToPage(title, url, category);
+        }
+      });
+      alert("Links importados com sucesso!");
+    } catch (error) {
+      alert("Erro ao importar o arquivo. Verifique se o JSON está no formato correto.");
+    }
+  };
+  reader.readAsText(file);
+});
+
 // ▶️ Executa ao carregar
 loadLinks();
 
