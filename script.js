@@ -3,12 +3,13 @@ const toggleBtn = document.getElementById("theme-toggle");
 const searchInput = document.getElementById("search-input");
 const categoryButtons = document.querySelectorAll("#category-filter button");
 const linkList = document.getElementById("link-list");
-
 const form = document.getElementById("link-form");
 const titleInput = document.getElementById("link-title");
 const urlInput = document.getElementById("link-url");
 const categorySelect = document.getElementById("link-category");
 
+// URL CORRIGIDA do seu Google Apps Script
+const scriptURL = 'https://script.google.com/macros/s/AKfycbzfhccxHP3Phetk2KuJuSZX9QD9Yh7krT9Sn4wIPuWeCD9kwTcPBWgzh1TfePL3sSw3/exec';
 
 // 🌗 Modo escuro/claro
 toggleBtn.addEventListener("click", () => {
@@ -57,10 +58,15 @@ function addLinkToPage(title, url, category) {
   const deleteBtn = document.createElement("button");
   deleteBtn.textContent = "🗑️";
   deleteBtn.className = "delete-btn";
+  deleteBtn.title = "Excluir link";
 
-  deleteBtn.addEventListener("click", () => {
-    deleteLink(title, url, category);
-    li.remove();
+  deleteBtn.addEventListener("click", (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (confirm(`Tem certeza que deseja excluir o link "${title}"?`)) {
+      deleteLink(title, url, category);
+      li.remove();
+    }
   });
 
   li.appendChild(link);
@@ -68,10 +74,97 @@ function addLinkToPage(title, url, category) {
   categoryList.appendChild(li);
 }
 
-// 🚀 Carregar links ao abrir a página
+// 💾 Salvar link no Google Sheets
+function saveLink(title, url, category) {
+  const data = {
+    title: title,
+    url: url,
+    category: category,
+    action: 'add'
+  };
+
+  fetch(scriptURL, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(data)
+  })
+  .then(response => response.json())
+  .then(data => {
+    console.log('Link salvo com sucesso:', data);
+    showNotification('Link adicionado com sucesso!');
+  })
+  .catch(error => {
+    console.error('Erro:', error);
+    showNotification('Erro ao salvar o link', 'error');
+  });
+}
+
+// 📤 Carregar links do Google Sheets (VERSÃO CORRIGIDA)
 function loadLinks() {
-  savedLinks.forEach((link) => {
-    addLinkToPage(link.title, link.url, link.category);
+  showLoading(true);
+  
+  // Adicionando timestamp para evitar cache
+  const timestamp = new Date().getTime();
+  fetch(`${scriptURL}?action=get&t=${timestamp}`)
+    .then(response => {
+      if (!response.ok) throw new Error('Erro na resposta da rede');
+      return response.json();
+    })
+    .then(data => {
+      console.log('Dados recebidos:', data);
+      
+      // Limpa todos os links antes de carregar os novos
+      document.querySelectorAll('#link-list ul').forEach(ul => {
+        ul.innerHTML = '';
+      });
+      
+      if (data && Array.isArray(data)) {
+        data.forEach(link => {
+          if (link.title && link.url && link.category) {
+            // Garante que a categoria está no formato correto
+            const correctedCategory = link.category.toLowerCase().replace(/\s+/g, '-');
+            addLinkToPage(link.title, link.url, correctedCategory);
+          }
+        });
+      } else {
+        showNotification('Nenhum link encontrado na planilha', 'info');
+      }
+    })
+    .catch(error => {
+      console.error('Erro ao carregar links:', error);
+      showNotification('Erro ao carregar links da planilha', 'error');
+    })
+    .finally(() => {
+      showLoading(false);
+    });
+}
+
+// 🗑️ Deletar link
+function deleteLink(title, url, category) {
+  const data = {
+    title: title,
+    url: url,
+    category: category,
+    action: 'delete'
+  };
+
+  fetch(scriptURL, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(data)
+  })
+  .then(response => response.json())
+  .then(data => {
+    console.log('Link deletado com sucesso:', data);
+    showNotification('Link excluído com sucesso!');
+  })
+  .catch(error => {
+    console.error('Erro:', error);
+    showNotification('Erro ao excluir o link', 'error');
   });
 }
 
@@ -83,7 +176,18 @@ form.addEventListener("submit", function (e) {
   const url = urlInput.value.trim();
   const category = categorySelect.value;
 
-  if (!title || !url || !category) return;
+  if (!title || !url || !category) {
+    showNotification('Preencha todos os campos', 'error');
+    return;
+  }
+
+  // Validação básica de URL
+  try {
+    new URL(url);
+  } catch (e) {
+    showNotification('URL inválida', 'error');
+    return;
+  }
 
   addLinkToPage(title, url, category);
   saveLink(title, url, category);
@@ -93,6 +197,25 @@ form.addEventListener("submit", function (e) {
   categorySelect.selectedIndex = 0;
 });
 
+// 🔒 Login do administrador
+const loginForm = document.getElementById("login-form");
+if (loginForm) {
+  loginForm.addEventListener("submit", (e) => {
+    e.preventDefault();
+
+    const user = document.getElementById("admin-user").value;
+    const pass = document.getElementById("admin-pass").value;
+
+    if (user === "admin" && pass === "claramente123") {
+      document.getElementById("admin-login").classList.add("hidden");
+      document.getElementById("admin-panel").classList.remove("hidden");
+      showNotification('Login realizado com sucesso!');
+    } else {
+      showNotification('Usuário ou senha incorretos!', 'error');
+    }
+  });
+}
+
 // 🛡️ Acesso por atalho Ctrl + Alt + A
 document.addEventListener("keydown", (e) => {
   if (e.ctrlKey && e.altKey && e.key.toLowerCase() === "a") {
@@ -101,42 +224,93 @@ document.addEventListener("keydown", (e) => {
   }
 });
 
-// 🔒 Login do administrador
-const loginForm = document.getElementById("login-form");
-loginForm.addEventListener("submit", (e) => {
-  e.preventDefault();
+// 🔔 Mostrar notificações
+function showNotification(message, type = 'success') {
+  const notification = document.createElement('div');
+  notification.className = `notification ${type}`;
+  notification.textContent = message;
+  
+  document.body.appendChild(notification);
+  
+  setTimeout(() => {
+    notification.classList.add('fade-out');
+    setTimeout(() => notification.remove(), 500);
+  }, 3000);
+}
 
-  const user = document.getElementById("admin-user").value;
-  const pass = document.getElementById("admin-pass").value;
-
-  if (user === "admin" && pass === "claramente123") {
-    document.getElementById("admin-login").classList.add("hidden");
-    document.getElementById("admin-panel").classList.remove("hidden");
-  } else {
-    alert("Usuário ou senha incorretos!");
+// ⏳ Mostrar/ocultar loading
+function showLoading(show) {
+  const loading = document.getElementById('loading-indicator');
+  if (loading) {
+    loading.style.display = show ? 'block' : 'none';
   }
+}
 
 // ▶️ Executa ao carregar
-loadLinks();   
+document.addEventListener('DOMContentLoaded', () => {
+  // Adiciona o indicador de loading se não existir
+  if (!document.getElementById('loading-indicator')) {
+    const loading = document.createElement('div');
+    loading.id = 'loading-indicator';
+    loading.style.display = 'none';
+    loading.innerHTML = '<div class="spinner"></div><p>Carregando...</p>';
+    document.body.appendChild(loading);
+  }
+  
+  loadLinks();
+});
 
-<script>
-  const scriptURL = "https://script.google.com/macros/s/AKfycbw_VuhdXt291Uzkwovlsi7SSWXqdqDyHD3CxMH-enx-eYq3B-ywVsAMhtG8hiBjv80T/exec"; // Substitua com seu link do Google Apps Script
-  const form = document.getElementById('meuFormulario');
-  const statusEnvio = document.getElementById('statusEnvio');
-
-  form.addEventListener('submit', e => {
-    e.preventDefault(); // Impede o recarregamento da página
-
-    const dados = new FormData(form);
-
-    fetch(scriptURL, { method: 'POST', body: dados })
+// Configuração do formulário de contato
+const contactForm = document.getElementById('meuFormulario');
+if (contactForm) {
+  contactForm.addEventListener('submit', e => {
+    e.preventDefault();
+    const statusEnvio = document.getElementById('statusEnvio');
+    
+    const dados = new FormData(contactForm);
+    
+    statusEnvio.textContent = "Enviando...";
+    statusEnvio.style.color = "blue";
+    
+    fetch(scriptURL, { 
+      method: 'POST', 
+      body: dados,
+      headers: {
+        'Accept': 'application/json'
+      }
+    })
       .then(response => {
-        statusEnvio.innerHTML = "Enviado com sucesso!";
-        form.reset();
+        if (response.ok) {
+          statusEnvio.textContent = "Enviado com sucesso!";
+          statusEnvio.style.color = "green";
+          contactForm.reset();
+        } else {
+          throw new Error('Erro na resposta');
+        }
       })
       .catch(error => {
-        statusEnvio.innerHTML = "Erro ao enviar. Tente novamente.";
+        statusEnvio.textContent = "Erro ao enviar. Tente novamente.";
+        statusEnvio.style.color = "red";
         console.error('Erro:', error);
       });
   });
-</script>
+}
+
+// Teste de conexão com a planilha
+console.log('Testando conexão com a planilha...');
+fetch(`${scriptURL}?action=get&t=${new Date().getTime()}`)
+  .then(response => {
+    console.log('Status da resposta:', response.status);
+    return response.json();
+  })
+  .then(data => {
+    console.log('Dados recebidos:', data);
+    if (data && data.length > 0) {
+      console.log('Primeiro link:', data[0]);
+    } else {
+      console.log('A planilha está vazia ou não retornou dados');
+    }
+  })
+  .catch(error => {
+    console.error('Erro no teste:', error);
+  });
