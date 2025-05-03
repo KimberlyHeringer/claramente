@@ -200,3 +200,25 @@ fetch('links.json')
     });
   })
   .catch(error => console.error('Erro ao carregar links:', error));
+
+<script>
+  const scriptURL = https://script.google.com/macros/s/AKfycbw_VuhdXt291Uzkwovlsi7SSWXqdqDyHD3CxMH-enx-eYq3B-ywVsAMhtG8hiBjv80T/exec; // Substitua com seu link do Google Apps Script
+  const form = document.getElementById('meuFormulario');
+  const statusEnvio = document.getElementById('statusEnvio');
+
+  form.addEventListener('submit', e => {
+    e.preventDefault(); // Impede o recarregamento da página
+
+    const dados = new FormData(form);
+
+    fetch(scriptURL, { method: 'POST', body: dados })
+      .then(response => {
+        statusEnvio.innerHTML = "Enviado com sucesso!";
+        form.reset();
+      })
+      .catch(error => {
+        statusEnvio.innerHTML = "Erro ao enviar. Tente novamente.";
+        console.error('Erro:', error);
+      });
+  });
+</script>
