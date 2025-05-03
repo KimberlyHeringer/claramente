@@ -8,7 +8,7 @@ const titleInput = document.getElementById("link-title");
 const urlInput = document.getElementById("link-url");
 const categorySelect = document.getElementById("link-category");
 
-// URL CORRIGIDA do seu Google Apps Script
+// URL do Google Apps Script
 const scriptURL = 'https://script.google.com/macros/s/AKfycbzfhccxHP3Phetk2KuJuSZX9QD9Yh7krT9Sn4wIPuWeCD9kwTcPBWgzh1TfePL3sSw3/exec';
 
 // 🌗 Modo escuro/claro
@@ -54,20 +54,6 @@ function addLinkToPage(title, url, category) {
   link.href = url;
   link.target = "_blank";
   link.textContent = title;
-
-  const deleteBtn = document.createElement("button");
-  deleteBtn.textContent = "🗑️";
-  deleteBtn.className = "delete-btn";
-  deleteBtn.title = "Excluir link";
-
-  deleteBtn.addEventListener("click", (e) => {
-    e.preventDefault();
-    e.stopPropagation();
-    if (confirm(`Tem certeza que deseja excluir o link "${title}"?`)) {
-      deleteLink(title, url, category);
-      li.remove();
-    }
-  });
 
   li.appendChild(link);
   li.appendChild(deleteBtn);
