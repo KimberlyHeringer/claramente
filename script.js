@@ -120,7 +120,7 @@ loginForm.addEventListener("submit", (e) => {
 loadLinks();   
 
 <script>
-  const scriptURL = https://script.google.com/macros/s/AKfycbw_VuhdXt291Uzkwovlsi7SSWXqdqDyHD3CxMH-enx-eYq3B-ywVsAMhtG8hiBjv80T/exec; // Substitua com seu link do Google Apps Script
+  const scriptURL = "https://script.google.com/macros/s/AKfycbw_VuhdXt291Uzkwovlsi7SSWXqdqDyHD3CxMH-enx-eYq3B-ywVsAMhtG8hiBjv80T/exec"; // Substitua com seu link do Google Apps Script
   const form = document.getElementById('meuFormulario');
   const statusEnvio = document.getElementById('statusEnvio');
 
