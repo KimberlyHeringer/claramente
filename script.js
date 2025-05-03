@@ -9,7 +9,6 @@ const titleInput = document.getElementById("link-title");
 const urlInput = document.getElementById("link-url");
 const categorySelect = document.getElementById("link-category");
 
-let savedLinks = JSON.parse(localStorage.getItem("meusLinks")) || [];
 
 // 🌗 Modo escuro/claro
 toggleBtn.addEventListener("click", () => {
@@ -69,21 +68,6 @@ function addLinkToPage(title, url, category) {
   categoryList.appendChild(li);
 }
 
-// 💾 Salvar no localStorage
-function saveLink(title, url, category) {
-  savedLinks.push({ title, url, category });
-  localStorage.setItem("meusLinks", JSON.stringify(savedLinks));
-}
-
-// ❌ Deletar do localStorage
-function deleteLink(title, url, category) {
-  savedLinks = savedLinks.filter(
-    (link) =>
-      !(link.title === title && link.url === url && link.category === category)
-  );
-  localStorage.setItem("meusLinks", JSON.stringify(savedLinks));
-}
-
 // 🚀 Carregar links ao abrir a página
 function loadLinks() {
   savedLinks.forEach((link) => {
@@ -131,75 +115,9 @@ loginForm.addEventListener("submit", (e) => {
   } else {
     alert("Usuário ou senha incorretos!");
   }
-});
- // 📤 Exportar links como JSON
-document.getElementById("export-links").addEventListener("click", () => {
-  const blob = new Blob([JSON.stringify(savedLinks, null, 2)], { type: "application/json" });
-  const url = URL.createObjectURL(blob);
-
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = "links-exportados.json";
-  a.click();
-
-  URL.revokeObjectURL(url);
-});
-
-// 📥 Importar links de um arquivo JSON
-document.getElementById("import-links").addEventListener("click", () => {
-  document.getElementById("import-file").click(); // abre seletor de arquivo
-});
-
-document.getElementById("import-file").addEventListener("change", (event) => {
-  const file = event.target.files[0];
-  if (!file) return;
-
-  const reader = new FileReader();
-  reader.onload = (e) => {
-    try {
-      const importedLinks = JSON.parse(e.target.result);
-      importedLinks.forEach(link => {
-        const { title, url, category } = link;
-
-        // Evita duplicatas
-        const exists = savedLinks.some(l =>
-          l.title === title && l.url === url && l.category === category
-        );
-
-        if (!exists) {
-          saveLink(title, url, category);
-          addLinkToPage(title, url, category);
-        }
-      });
-      alert("Links importados com sucesso!");
-    } catch (error) {
-      alert("Erro ao importar o arquivo. Verifique se o JSON está no formato correto.");
-    }
-  };
-  reader.readAsText(file);
-});
 
 // ▶️ Executa ao carregar
-loadLinks();
-
-fetch('links.json')
-  .then(response => response.json())
-  .then(data => {
-    data.forEach(link => {
-      const { title, url, category } = link;
-
-      // Evita duplicatas no localStorage
-      const exists = savedLinks.some(l =>
-        l.title === title && l.url === url && l.category === category
-      );
-
-      if (!exists) {
-        saveLink(title, url, category);
-        addLinkToPage(title, url, category); // também adiciona visualmente
-      }
-    });
-  })
-  .catch(error => console.error('Erro ao carregar links:', error));
+loadLinks();   
 
 <script>
   const scriptURL = https://script.google.com/macros/s/AKfycbw_VuhdXt291Uzkwovlsi7SSWXqdqDyHD3CxMH-enx-eYq3B-ywVsAMhtG8hiBjv80T/exec; // Substitua com seu link do Google Apps Script
